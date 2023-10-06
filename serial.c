@@ -10,7 +10,8 @@ int serial_setup (void);
 
 
 void main(){
-	char msg[] = "";
+	char msg[256] ;
+	char c;
 	char read_buf [256];
 	memset(&read_buf,'\0',sizeof(read_buf));
 
@@ -18,27 +19,44 @@ void main(){
 
 	// open status serial port 
 	if (serial_port < 0) {
-	    printf("Error opening port ..  \n");
+		printf("Error opening port ..  \n");
 	}
 	else {
-	    printf("open serial succ \n");
+		printf("open serial succ \n");
 	}
 	while (1){
 
-	memset(&read_buf,'\0',sizeof(read_buf));
-	/* write(serial_port, &msg, sizeof(msg)); */
-	  int n  = read(serial_port , &read_buf, sizeof(read_buf)); 
-	if (n)
-	printf("%s",read_buf);
-	n = 0;
+		memset(&read_buf,'\0',sizeof(read_buf));
+		memset(&msg,'\0',sizeof(msg));
+		int n  = read(serial_port , &read_buf, sizeof(read_buf)); 
+		if (n){
+			printf("%s",read_buf);
+		}
+		else{
+			printf("Enter cmd.. ");
+			while( c = getc(stdin) ){
+				write(serial_port, &c, 1);
+				if ( c == '\0')
+					break;
+			}
+			
+		}
+		n = 0;
 	}
+	/*
+	   scanf("%s",msg);
+	   if(strlen(msg)){
+	   write(serial_port, &msg, sizeof(msg));
+	   }
+	   }
+	   */
 
 	printf("\n prog terminated");
-}
+	}
 
 int serial_setup (){
-	
-	int serial_port = open("/dev/ttyUSB0", O_RDWR);
+
+	int serial_port = open("/dev/ttyUSB1", O_RDWR);
 	struct termios ser, def;
 	tcgetattr( serial_port, &def );
 	ser = def;
@@ -46,6 +64,7 @@ int serial_setup (){
 	ser.c_cflag &= ~( PARENB | CRTSCTS );
 	ser.c_oflag &= ONLCR;
 	ser.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
+	/* ser.c_iflag |= IGNBRK; */
 	ser.c_lflag &= ~ECHO; // Disable echo
 	ser.c_cc[VMIN] = 0;
 	ser.c_cc[VTIME] = 10;
